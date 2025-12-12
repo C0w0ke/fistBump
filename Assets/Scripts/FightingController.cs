@@ -33,11 +33,13 @@ public class FightingController : MonoBehaviour
     [Header("Health")]
     public int maxHealth = 100;
     public int currentHealth;
+    public HealthBar healthBar;
 
 
     void Awake()
     {
         currentHealth = maxHealth;
+        healthBar.SetFullHealth(currentHealth);
         characterController = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
     }
@@ -158,6 +160,7 @@ public class FightingController : MonoBehaviour
 
         // Decrease health
         currentHealth -= takeDamage;
+        healthBar.SetHealth(currentHealth);
 
         if (currentHealth <= 0)
         {
