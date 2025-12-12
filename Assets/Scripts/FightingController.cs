@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 public class FightingController : MonoBehaviour
@@ -13,8 +14,10 @@ public class FightingController : MonoBehaviour
     [Header("Fighting Status")]
     public float attackCooldown = 0.5f;
     public int attackDamage = 5;
+    public float attackRadius = 2.2f;
     public string[] attackAnimations = { "Attack1Animation", "Attack2Animation", "Attack3Animation", "Attack4Animation" };
     private float lastAttackTime;
+    public Transform[] opponents;
 
     [Header("Dodge Status")]
     public float dodgeCooldown = 1f;
@@ -25,9 +28,16 @@ public class FightingController : MonoBehaviour
     public ParticleSystem attack1Effect;
     public ParticleSystem attack2Effect;
     public ParticleSystem attack3Effect;
+    public AudioClip[] hitSounds;
+
+    [Header("Health")]
+    public int maxHealth = 100;
+    public int currentHealth;
+
 
     void Awake()
     {
+        currentHealth = maxHealth;
         characterController = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
     }
@@ -83,13 +93,24 @@ public class FightingController : MonoBehaviour
             animator.Play(attackAnimations[attackIndex]);
 
             int damage = attackDamage;
-            Debug.Log("Performed attack" + (attackIndex + 1) + "dealing" + damage + "damage");
+            //Debug.Log("Performed attack" + (attackIndex + 1) + "dealing" + damage + "damage");
 
             lastAttackTime = Time.time;
+
+            // Loop each opponent
+            foreach (Transform opponent in opponents)
+            {
+                if (Vector3.Distance(transform.position, opponent.position) <= attackRadius)
+                {
+                    opponent.GetComponent<OpponentAI>().StartCoroutine(opponent.GetComponent<OpponentAI>().PlayHitDamageAnimation(attackDamage));
+                }
+            }
+
         }
         else
         {
-            Debug.Log("Endlag");
+            // Stop player from attacking too quickly
+            Debug.Log("Endlag! On cooldown...");
         }
     }
 
@@ -122,6 +143,34 @@ public class FightingController : MonoBehaviour
                 Debug.Log("Dodge on cooldown");
             }
         }
+    }
+
+    public IEnumerator PlayHitDamageAnimation(int takeDamage)
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        // Play a random hit sound
+        if (hitSounds != null && hitSounds.Length > 0 )
+        {
+            int randomIndex = Random.Range(0, hitSounds.Length);
+            AudioSource.PlayClipAtPoint(hitSounds[randomIndex], transform.position);
+        }
+
+        // Decrease health
+        currentHealth -= takeDamage;
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+
+        animator.Play("HitDamageAnimation");
+        Debug.Log("Player got hit!");
+    }
+
+    void Die()
+    {
+        Debug.Log("Player died!");
     }
 
     public void Attack1Effect()
