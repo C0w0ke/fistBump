@@ -2,140 +2,52 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OpponentAI : MonoBehaviour
+public class OpponentAI : BaseCharacter
 {
-    [Header("Opponent Movement")]
-    private float movementSpeed = 2f;
-    public float rotationSpeed = 10f;
-    public CharacterController characterController;
-    public Animator animator;
-
-    [Header("Opponent Fight")]
-    public float attackCooldown = 0.5f;
-    public int attackDamage = 5;
-    public string[] attackAnimations = { "Attack1Animation", "Attack2Animation", "Attack3Animation", "Attack4Animation" };
-    public float dodgeDistance = 2f;
-    public int attackCount = 0;
-    public int randomNumber;
-    private float attackRadius = 2f;
-    public FightingController[] fightingController;
+    [Header("Opponent AI")]
+    public FightingController[] fightingControllers;
     public Transform[] players;
     public bool isTakingDamage;
-    private float lastAttackTime;
 
-    [Header("Effects and sounds")]
-    public ParticleSystem attack1Effect;
-    public ParticleSystem attack2Effect;
-    public ParticleSystem attack3Effect;
-    public AudioClip[] hitSounds;
-
-    [Header("Health")]
-    public int maxHealth = 100;
-    public int currentHealth;
-    public HealthBar healthBar;
-
-    void Awake()
+    protected override void Awake()
     {
-        currentHealth = maxHealth;
-        healthBar.SetFullHealth(currentHealth);
-        createRandomNumber();
+        base.Awake();
+
+        attackStrategies = new IAttackStrategy[]
+        {
+            new BasicAttackStrategy("Attack1Animation", players),
+            new BasicAttackStrategy("Attack2Animation", players),
+            new BasicAttackStrategy("Attack3Animation", players),
+            new BasicAttackStrategy("Attack4Animation", players)
+        };
     }
 
-    void Update()
+    protected override void Update()
     {
-        for (int i = 0; i < fightingController.Length; i++)
+        HandleInputOrAI(); // AI logic
+    }
+
+    protected override void HandleInputOrAI()
+    {
+        for (int i = 0; i < fightingControllers.Length; i++)
         {
-            if (players[i].gameObject.activeSelf && Vector3.Distance(transform.position, players[i].position) <= attackRadius)
+            if (players[i].gameObject.activeSelf)
             {
-                animator.SetBool("Walking", false);
-
-                if (Time.time - lastAttackTime > attackCooldown)
+                if (Vector3.Distance(transform.position, players[i].position) <= attackRadius)
                 {
-                    int randomAttackIndex = Random.Range(0, attackAnimations.Length);
-
-                    if (!isTakingDamage)
+                    animator.SetBool("Walking", false);
+                    if (Time.time - lastAttackTime > attackCooldown && !isTakingDamage)
                     {
-                        PerformAttack(randomAttackIndex);
+                        int randomAttack = Random.Range(0, attackStrategies.Length);
+                        PerformAttack(randomAttack);
                     }
-
-                    // Play hit animation on the player
-                    fightingController[i].StartCoroutine(fightingController[i].PlayHitDamageAnimation(attackDamage));
                 }
-            } 
-            else
-            {
-                if (players[i].gameObject.activeSelf)
+                else
                 {
                     Vector3 direction = (players[i].position - transform.position).normalized;
-                    characterController.Move(direction * movementSpeed * Time.deltaTime);
-
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-
-                    animator.SetBool("Walking", true);
+                    PerformMovement(direction);
                 }
             }
-
         }
     }
-
-    void PerformAttack(int attackIndex)
-    {
-        animator.Play(attackAnimations[attackIndex]);
-
-        int damage = attackDamage;
-        //Debug.Log("Performed attack" + (attackIndex + 1) + "dealing" + damage + "damage");
-
-        lastAttackTime = Time.time;
-    }
-
-    void createRandomNumber()
-    {
-        randomNumber = Random.Range(1, 5);
-    }
-
-    public IEnumerator PlayHitDamageAnimation(int takeDamage)
-    {
-        yield return new WaitForSeconds(0.5f);
-
-        // Play a random hit sound
-        if (hitSounds != null && hitSounds.Length > 0)
-        {
-            int randomIndex = Random.Range(0, hitSounds.Length);
-            AudioSource.PlayClipAtPoint(hitSounds[randomIndex], transform.position);
-        }
-
-        // Decrease health
-        currentHealth -= takeDamage;
-        healthBar.SetHealth(currentHealth);
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-
-        animator.Play("HitDamageAnimation");
-        Debug.Log("Opponent got hit!");
-    }
-
-    void Die()
-    {
-        Debug.Log("Opponent died!");
-    }
-
-    public void Attack1Effect()
-    {
-        attack1Effect.Play();
-    }
-
-    public void Attack2Effect()
-    {
-        attack2Effect.Play();
-    }
-
-    public void Attack3Effect()
-    {
-        attack3Effect.Play();
-    }
-
 }

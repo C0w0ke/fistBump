@@ -1,42 +1,52 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class ResultManager : MonoBehaviour
 {
     public GameObject resultPanel;
     public Text resultText;
 
-    public FightingController[] fightingControllers;
-    public OpponentAI[] opponentAI_s;
-
     private void Update()
     {
-        foreach (FightingController fightingController in fightingControllers)
+        BaseCharacter[] allActiveCharacters = FindObjectsOfType<BaseCharacter>();
+
+        if (allActiveCharacters.Length == 0)
         {
-            if (fightingController.gameObject.activeSelf && fightingController.currentHealth <= 0)
-            {
-                SetResult("You lose!");
-                return;
-            }
+            Debug.LogWarning("ResultManager: No active BaseCharacter instances found in scene!");
+            return;
         }
-        foreach (OpponentAI opponentAI in opponentAI_s)
+
+        foreach (BaseCharacter character in allActiveCharacters)
         {
-            if (opponentAI.gameObject.activeSelf && opponentAI.currentHealth <= 0)
+            if (character != null && character.gameObject.activeSelf && character.healthComponent != null)
             {
-                SetResult("You win!");
-                return;
+                if (character.healthComponent.currentHealth <= 0)
+                {
+                    string result = (character is FightingController) ? "You lose!" : "You win!";
+                    SetResult(result);
+                    return;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("ResultManager: Skipping inactive/null character or missing healthComponent.");
             }
         }
     }
 
     void SetResult(string result)
     {
+        if (resultPanel == null || resultText == null)
+        {
+            Debug.LogError("ResultManager: resultPanel or resultText not assigned!");
+            return;
+        }
         resultText.text = result;
         resultPanel.SetActive(true);
         Time.timeScale = 0f;
+        Debug.Log("ResultManager: " + result);
     }
 
     public void LoadMainMenu()
