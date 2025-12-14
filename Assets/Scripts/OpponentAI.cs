@@ -5,7 +5,7 @@ using UnityEngine;
 public class OpponentAI : MonoBehaviour
 {
     [Header("Opponent Movement")]
-    public float movementSpeed = 1f;
+    private float movementSpeed = 2f;
     public float rotationSpeed = 10f;
     public CharacterController characterController;
     public Animator animator;
@@ -17,7 +17,7 @@ public class OpponentAI : MonoBehaviour
     public float dodgeDistance = 2f;
     public int attackCount = 0;
     public int randomNumber;
-    public float attackRadius = 2f;
+    private float attackRadius = 2f;
     public FightingController[] fightingController;
     public Transform[] players;
     public bool isTakingDamage;
@@ -87,15 +87,6 @@ public class OpponentAI : MonoBehaviour
         //Debug.Log("Performed attack" + (attackIndex + 1) + "dealing" + damage + "damage");
 
         lastAttackTime = Time.time;
-    }
-
-    void PerformDodge()
-    {
-        animator.Play("DodgeFrontAnimation");
-
-        Vector3 dodgeDirection = -transform.forward * dodgeDistance;
-
-        characterController.SimpleMove(dodgeDirection);
     }
 
     void createRandomNumber()

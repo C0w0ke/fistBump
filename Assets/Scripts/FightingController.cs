@@ -6,7 +6,7 @@ using UnityEngine;
 public class FightingController : MonoBehaviour
 {
     [Header("Movement Status")]
-    public float movementSpeed = 1f;
+    private float movementSpeed = 2f;
     public float rotationSpeed = 10f;
     private CharacterController characterController;
     private Animator animator;
@@ -14,7 +14,7 @@ public class FightingController : MonoBehaviour
     [Header("Fighting Status")]
     public float attackCooldown = 0.5f;
     public int attackDamage = 5;
-    public float attackRadius = 2.2f;
+    private float attackRadius = 2f;
     public string[] attackAnimations = { "Attack1Animation", "Attack2Animation", "Attack3Animation", "Attack4Animation" };
     private float lastAttackTime;
     public Transform[] opponents;
@@ -71,21 +71,26 @@ public class FightingController : MonoBehaviour
     {
         float horizontalInput = Input.GetAxis("Horizontal");
 
-        Vector3 movement = new Vector3(0f, 0f, horizontalInput);
-
-        if (movement != Vector3.zero)
+        if (horizontalInput != 0f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(movement);
-            // transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            // transform.rotation = targetRotation;
+            // Get the main camera's transform
+            Transform cameraTransform = Camera.main.transform;
+            Vector3 cameraRight = cameraTransform.right;
+            cameraRight.y = 0f;
+            cameraRight.Normalize();
+
+            Vector3 worldMovement = cameraRight * horizontalInput;
+            Quaternion targetRotation = Quaternion.LookRotation(worldMovement);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * 4f * Time.deltaTime);
+            
             animator.SetBool("Walking", true);
+            characterController.Move(worldMovement * movementSpeed * Time.deltaTime);
         }
         else
         {
+            // No input: stop walking animation
             animator.SetBool("Walking", false);
         }
-        characterController.Move(movement * movementSpeed * Time.deltaTime);
     }
 
     void PerformAttack(int attackIndex)
