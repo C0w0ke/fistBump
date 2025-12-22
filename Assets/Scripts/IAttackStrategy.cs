@@ -1,4 +1,5 @@
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public interface IAttackStrategy
 {
@@ -19,9 +20,18 @@ public class BasicAttackStrategy : IAttackStrategy
     public void Execute(BaseCharacter character)
     {
         character.animator.Play(animationName);
-        foreach (Transform target in targets)
+        Debug.DrawRay(character.transform.position, character.transform.forward * character.attackRadius, Color.red, 1f);
+
+        float sphereRadius = 0.2f;
+        RaycastHit[] hits = Physics.SphereCastAll(character.transform.position, sphereRadius, character.transform.forward, character.attackRadius);
+
+        Debug.Log("Total hits: " + hits.Length);
+
+        foreach (RaycastHit hit in hits)
         {
-            if (Vector3.Distance(character.transform.position, target.position) <= character.attackRadius)
+            Debug.Log("Hit object: " + hit.transform.name);
+            Transform target = hit.transform;
+            if (System.Array.IndexOf(targets, target) >= 0)
             {
                 var targetChar = target.GetComponent<BaseCharacter>();
                 if (targetChar != null)
@@ -32,3 +42,19 @@ public class BasicAttackStrategy : IAttackStrategy
         }
     }
 }
+
+//public void Execute(BaseCharacter character)
+//{
+//    character.animator.Play(animationName);
+//    foreach (Transform target in targets)
+//    {
+//        if (Vector3.Distance(character.transform.position, target.position) <= character.attackRadius)
+//        {
+//            var targetChar = target.GetComponent<BaseCharacter>();
+//            if (targetChar != null)
+//            {
+//                targetChar.StartCoroutine(targetChar.PlayHitDamageAnimation(character.attackDamage));
+//            }
+//        }
+//    }
+//}

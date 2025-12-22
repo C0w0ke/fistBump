@@ -45,8 +45,8 @@ public class FightingController : BaseCharacter
         // Dodge
         if (Input.GetKeyDown(KeyCode.E))
         {
-            float hInput = Input.GetAxis("Horizontal");
-            Vector3 dodgeDir = (hInput > 0) ? Vector3.forward : (hInput < 0) ? -Vector3.forward : transform.forward;
+            float h_input = Input.GetAxis("Horizontal");
+            Vector3 dodgeDir = (h_input > 0) ? Vector3.forward : (h_input < 0) ? -Vector3.forward : transform.forward;
             PerformDodge(dodgeDir);
         }
     }
